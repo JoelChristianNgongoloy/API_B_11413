@@ -95,51 +95,55 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // Find the user by ID
         $user = User::find($id);
 
-        if (is_null($user)) {
-            return response([
-                'message' => 'User Not Found',
-                'data' => null
-            ], 400);
+        // Check if the user exists
+        if (!$user) {
+            return response(['message' => 'User not found'], 404);
         }
 
+        // Validate the incoming request data
         $updateData = $request->all();
-
         $validate = Validator::make($updateData, [
-            'name' => 'max:60',
-            'email' => 'required|email:rfc,dns|unique:users',
-            'password' => 'min:8',
-            'no_telp' => 'regex:/^08[0-9]{9,11}$/',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+            'name' => 'sometimes|required|max:60',
+            'email' => 'sometimes|required|email:rfc,dns|unique:users,email,' . $id,
+            'password' => 'sometimes|required|min:8',
+            'no_telp' => 'sometimes|required|regex:/^08[0-9]{9,11}$/',
+            'image' => 'sometimes|required|image|mimes:jpg,jpeg,png|max:2048'
         ]);
 
-        if ($validate->fails())
+        if ($validate->fails()) {
             return response(['message' => $validate->errors()], 400);
-        $user->name = $updateData['name'];
-        $user->email = $updateData['email'];
-        $user->password = $updateData['password'];
-        $user->no_telp = $updateData['no_telp'];
-
-        try {
-            // Cek dan proses gambar jika ada di request
-            if ($request->hasFile('image')) {
-                $image = $request->file('image');
-                $imageName = time() . '.' . $image->getClientOriginalName();
-                $image->move(public_path('images'), $imageName);
-                $user->image = $updateData[$imageName];
-            }
-
-            $user->save();
-
-            return response()->json([
-                'message' => 'Update success',
-                'user' => $user
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json(['message' => 'Update failed', 'error' => $e->getMessage()], 500);
         }
+
+        // Update user data
+        $user->name = $request->has('name') ? $request->name : $user->name;
+        $user->email = $request->has('email') ? $request->email : $user->email;
+        $user->no_telp = $request->has('no_telp') ? $request->no_telp : $user->no_telp;
+
+        // Update password if provided
+        if ($request->has('password')) {
+            $user->password = bcrypt($request->password);
+        }
+
+        // Update image if provided
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('images'), $imageName);
+            $user->image = $imageName;
+        }
+
+        // Save the updated user
+        $user->save();
+
+        return response([
+            'message' => 'User updated successfully',
+            'user' => $user
+        ], 200);
     }
+
 
 
     /**

@@ -36,7 +36,6 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    // Menambahkan metode untuk menghasilkan ID baru sesuai format yang diminta
     public static function generateUserId()
     {
         $year = now()->format('y');
