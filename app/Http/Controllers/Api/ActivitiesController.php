@@ -18,19 +18,18 @@ class ActivitiesController extends Controller
     public function index()
     {
         //
-        $activities = Activities::with(['User','Content'])->get();
+        $activities = Activities::with(['User', 'Content'])->get();
 
-        if(count($activities) > 0){
+        if (count($activities) > 0) {
             return response([
                 'message' => 'Retrieve All Success',
-                'data'=> $activities
-                ],200);
+                'data' => $activities
+            ], 200);
         }
         return response([
             'message' => 'empty',
-            'data'=> null
-            ],400);
-
+            'data' => null
+        ], 400);
     }
 
     /**
@@ -38,29 +37,44 @@ class ActivitiesController extends Controller
      */
     public function store(Request $request)
     {
-        //
         $storeData = $request->all();
 
         $validate = Validator::make($storeData, [
             'id_user' => 'required',
             'id_content' => 'required',
-            'accessed_at' => 'required|date',
         ]);
-        if ($validate->fails())
-            return response(['message' => $validate->errors()],400);
+
+        if ($validate->fails()) {
+            return response(['message' => $validate->errors()], 400);
+        }
 
         $user = User::find($storeData['id_user']);
-        if(!$user){
-            return response(['message'=> 'User Not Found'],400);
+        if (!$user) {
+            return response(['message' => 'User not found'], 400);
         }
+
+        if ($user->status !== 1) {
+            return response(['message' => 'User is not active'], 400);
+        }
+
         $content = Content::find($storeData['id_content']);
-        if(!$content){
-            return response(['message'=> 'Content Not Found'],400);
+        if (!$content) {
+            return response(['message' => 'Content not found'], 400);
         }
-        $activities = Activities::create($storeData);
+
+        if ($content->type === 'Paid' && !$user->isSubscribed()) {
+            return response(['message' => 'User is not subscribed to access paid content'], 400);
+        }
+
+        $activities = Activities::create([
+            'id_user' => $storeData['id_user'],
+            'id_content' => $storeData['id_content'],
+            'accessed_at' => now(),
+        ]);
+
         return response([
-            'message' => $user->name.'accessed'.$content->title. 'at'.$activities['accessed_at'].'.',
-        ],200);
+            'message' => $user->name . ' accessed ' . $content->title . ' at ' . $activities['accessed_at'] . '.',
+        ], 200);
     }
 
     /**
@@ -70,17 +84,17 @@ class ActivitiesController extends Controller
     {
         //
         $activities = Activities::find($id);
-        if(!is_null($activities)){
+        if (!is_null($activities)) {
             return response([
                 'message' => 'Activities Found',
-                'data'=> $activities
-            ],200);
+                'data' => $activities
+            ], 200);
         }
 
         return response([
-            'message'=> 'Activities Not Found',
-            'data'=> null
-        ],400);
+            'message' => 'Activities Not Found',
+            'data' => null
+        ], 400);
     }
 
     /**
@@ -91,11 +105,11 @@ class ActivitiesController extends Controller
         $updateData = $request->all();
         $activities = Activities::find($id);
 
-        if(is_null($activities)){
+        if (is_null($activities)) {
             return response([
-                'message'=> 'Activities Not Found',
-                'data'=> null
-            ],400);
+                'message' => 'Activities not found',
+                'data' => null
+            ], 400);
         }
 
         $validate = Validator::make($updateData, [
@@ -103,34 +117,45 @@ class ActivitiesController extends Controller
             'id_content' => 'required',
         ]);
 
-        if($validate->fails())
-            return response(['message' => $validate->errors()],400);
-        
+        if ($validate->fails()) {
+            return response(['message' => $validate->errors()], 400);
+        }
+
         $user = User::find($updateData['id_user']);
-        if(!$user){
+        if (!$user) {
             return response(['message' => 'User not found'], 400);
         }
 
-        $content = Content::find($updateData['id_content']);
-        if(!$content) {
-            return response(['message'=> 'Content Not Found'], 400);
+        dd($user->isSubscribed());
+
+        if ($user->status !== 1) {
+            return response(['message' => 'User is not active'], 400);
         }
 
-        $activities->user_id = $updateData['id_user'];
-        $activities->content_id = $updateData['id_content'];
-        $activities->accessed_at = $updateData['accessed_at'];
+        $content = Content::find($updateData['id_content']);
+        if (!$content) {
+            return response(['message' => 'Content not found'], 400);
+        }
 
-        if($activities->save()){
+        if ($content->type === 'Paid' && !$user->isSubscribed()) {
+            return response(['message' => 'User is not subscribed to access paid content'], 400);
+        }
+
+        $activities->id_user = $updateData['id_user'];
+        $activities->id_content = $updateData['id_content'];
+        $activities->accessed_at = now();
+
+        if ($activities->save()) {
             return response([
-                'message' => 'Update Activities Succes',
-                'data'=> $activities
-            ],200);
+                'message' => 'Activities updated successfully',
+                'data' => $activities
+            ], 200);
         }
 
         return response([
-            'message' => 'Update Activities Failed',
-            'data'=> null
-        ],400);
+            'message' => 'Failed to update activities',
+            'data' => null
+        ], 400);
     }
 
     /**
@@ -140,23 +165,22 @@ class ActivitiesController extends Controller
     {
         //
         $activities = Activities::find($id);
-        if(is_null($activities)){
+        if (is_null($activities)) {
             return response([
                 'message' => 'Activities Not Found',
-                'data'=> null
-            ],400);
+                'data' => null
+            ], 400);
         }
 
-        if($activities->delete()){
+        if ($activities->delete()) {
             return response([
                 'message' => 'Delete Activities Succes',
-                'data'=> $activities
-            ],200);
+                'data' => $activities
+            ], 200);
         }
         return response([
             'message' => 'Delete Activities Fail',
-            'data'=> null
-        ],400);
-
+            'data' => null
+        ], 400);
     }
 }

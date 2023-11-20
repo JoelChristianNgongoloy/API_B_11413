@@ -17,17 +17,17 @@ class ContentController extends Controller
     {
         $contents = Content::all();
 
-        if(count($contents) > 0){
+        if (count($contents) > 0) {
             return response([
                 'message' => 'Retrieve All Success',
                 'data' => $contents
-            ],200);
+            ], 200);
         }
 
         return response([
-            'message'=> 'empty',
-            'data'=> null
-        ],400);
+            'message' => 'empty',
+            'data' => null
+        ], 400);
     }
 
     /**
@@ -39,19 +39,26 @@ class ContentController extends Controller
 
         $validate = Validator::make($storeData, [
             'title' => 'required|max:60',
-            'released_year'=>'required',
+            'released_year' => 'required',
             'genre' => 'required',
-            'type'=> 'required',
+            'type' => 'required|in:Free,Paid'
         ]);
 
-        if( $validate->fails() )
-        return response(['message' => $validate->errors()],400);
+        if (!in_array($storeData['type'], ['Free', 'Paid'])) {
+            return response([
+                'message' => 'Invalid Type',
+                'errors' => ['type' => ['Type must be Free or Paid']]
+            ], 400);
+        }
+
+        if ($validate->fails())
+            return response(['message' => $validate->errors()], 400);
 
         $content = Content::create($storeData);
         return response([
             'message' => 'Add Content Success',
-            'data'=> $content
-        ],200);
+            'data' => $content
+        ], 200);
     }
 
     /**
@@ -61,18 +68,18 @@ class ContentController extends Controller
     {
         $contents = Content::find($id);
 
-        if(!is_null($contents)){
+        if (!is_null($contents)) {
             return response([
-                'message' => 'Content Found, it is . '.$contents->title,
+                'message' => 'Content Found, it is . ' . $contents->title,
                 'data' => $contents
-            ],200);
+            ], 200);
         }
 
         return response([
             'message' => 'Content Not Found',
             'data' => null
 
-        ] ,400);
+        ], 400);
     }
 
     /**
@@ -81,39 +88,45 @@ class ContentController extends Controller
     public function update(Request $request, string $id)
     {
         $content = Content::find($id);
-        if(is_null($content)){
+        if (is_null($content)) {
             return response([
-                'message'=> 'Content Not Found',
-                'data'=> null
-            ] ,400);
+                'message' => 'Content Not Found',
+                'data' => null
+            ], 400);
         }
 
         $updateData = $request->all();
         $validate = Validator::make($updateData, [
             'title' => 'required|max:60',
             'released_year' => 'required',
-            'genre'=> 'required',
-            'type'=> 'required',
+            'genre' => 'required',
+            'type' => 'required|in:Free,Paid'
         ]);
 
-        if( $validate->fails())
-            return response(['message' => $validate->errors()],400);
-            $content->title = $updateData['title'];
-            $content->released_year = $updateData['released_year'];
-            $content->genre = $updateData['genre'];
-            $content->type = $updateData['type'];
+        if (!in_array($updateData['type'], ['Free', 'Paid'])) {
+            return response([
+                'message' => 'Invalid Type',
+                'errors' => ['type' => ['Type must be Free or Paid']]
+            ], 400);
+        }
 
-        if( $content->save() ){
+        if ($validate->fails())
+            return response(['message' => $validate->errors()], 400);
+        $content->title = $updateData['title'];
+        $content->released_year = $updateData['released_year'];
+        $content->genre = $updateData['genre'];
+        $content->type = $updateData['type'];
+
+        if ($content->save()) {
             return response([
                 'message' => 'Update Content Succes',
-                'data'=> $content
-                ] ,200);
+                'data' => $content
+            ], 200);
         }
-            return response([
-                'message' => 'Update Content Fail',
-                'data'=> null
-                ] ,400);
-   
+        return response([
+            'message' => 'Update Content Fail',
+            'data' => null
+        ], 400);
     }
 
     /**
@@ -123,21 +136,21 @@ class ContentController extends Controller
     {
         //
         $content = Content::find($id);
-        if(is_null($content)){
+        if (is_null($content)) {
             return response([
-                'message'=> 'Content Not Found',
-                'data'=> null
-                ] ,400);
+                'message' => 'Content Not Found',
+                'data' => null
+            ], 400);
         }
-        if( $content->delete() ){
+        if ($content->delete()) {
             return response([
                 'message' => 'Delete Content Success',
-                'data'=> $content
-                ] ,200);
+                'data' => $content
+            ], 200);
         }
         return response([
-            'message'=> 'Delete Content Failed',
-            'data'=> null
-            ] ,400);
+            'message' => 'Delete Content Failed',
+            'data' => null
+        ], 400);
     }
 }

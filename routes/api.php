@@ -30,10 +30,14 @@ Route::group(['middleware'=> 'auth:api'], function () {
     Route::put('/activities/{id}',[App\Http\Controllers\Api\ActivitiesController::class,'update']);
     Route::delete('/activities/{id}',[App\Http\Controllers\Api\ActivitiesController::class,'destroy']);
 
-    // Route::get('/subscriptions',[App\Http\Controllers\Api\SubscriptionController::class,'index']);
-    // Route::post('/subscriptions',[App\Http\Controllers\Api\SubscriptionController::class,'store']);
-    // Route::get('/subscriptions/{id}',[App\Http\Controllers\Api\SubscriptionController::class,'show']);
-    // Route::put('/subscriptions/{id}',[App\Http\Controllers\Api\SubscriptionController::class,'update']);
-    // Route::delete('/subscriptions/{id}',[App\Http\Controllers\Api\SubscriptionController::class,'destroy']);
+    Route::get('/subscriptions',[App\Http\Controllers\Api\SubscriptionController::class,'index']);
+    Route::post('/subscriptions',[App\Http\Controllers\Api\SubscriptionController::class,'store']);
+    Route::get('/subscriptions/{id}',[App\Http\Controllers\Api\SubscriptionController::class,'show']);
+    Route::put('/subscriptions/{id}',[App\Http\Controllers\Api\SubscriptionController::class,'update']);
+    Route::delete('/subscriptions/{id}',[App\Http\Controllers\Api\SubscriptionController::class,'destroy']);
 
+    Route::get('/users',[App\Http\Controllers\Api\UserController::class,'index']);
+    Route::get('/users/{id}',[App\Http\Controllers\Api\UserController::class,'show']);
+    Route::put('/users/{id}',[App\Http\Controllers\Api\UserController::class,'update']);
+    Route::delete('/users/{id}',[App\Http\Controllers\Api\UserController::class,'destroy']);
 });
